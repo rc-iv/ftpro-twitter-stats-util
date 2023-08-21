@@ -1,6 +1,7 @@
 import psycopg2
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 production = True
 # load .env file
@@ -42,6 +43,48 @@ def get_twitter_usernames():
             else:
                 twitter_usernames.append((row[2], row[0]))
         print(f"total users with data: {count}")
+    except (Exception, psycopg2.Error) as error:
+        print("Error while fetching data from PostgresSQL", error)
+
+    finally:
+        # closing database connection.
+        if connection:
+            cursor.close()
+            connection.close()
+        return twitter_usernames
+
+
+def get_recent_users():
+    twitter_usernames = []
+    connection = None
+    cursor = None
+    try:
+        connection = psycopg2.connect(user=DB_USER,
+                                      password=DB_PASSWORD,
+                                      host=DB_HOST,
+                                      port=DB_PORT,
+                                      database=DB_NAME)
+        cursor = connection.cursor()
+        select_query = """
+        select * from users 
+        where "lastUpdated" > current_timestamp - interval '1 minute'
+        order by "lastUpdated" desc
+        """
+
+        cursor.execute(select_query)
+        metadata_records = cursor.fetchall()
+
+        count = 0
+        count2 = 0
+        for row in metadata_records:
+            print(row[2] + " " + str(row[17]))
+            if row[12]:
+                count += 1
+            else:
+                count2 += 1
+                twitter_usernames.append((row[2], row[0]))
+        print(f"total users with data: {count}")
+        print(f"total users without data: {count2}")
     except (Exception, psycopg2.Error) as error:
         print("Error while fetching data from PostgresSQL", error)
 

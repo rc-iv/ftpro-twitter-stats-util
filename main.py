@@ -1,7 +1,8 @@
 import stweet as st
-from db import get_twitter_usernames, update_user
+from db import get_twitter_usernames, update_user, get_recent_users
 import json
 import time
+
 
 def try_user_scrape(username):
     user_task = st.GetUsersTask([username])
@@ -24,13 +25,39 @@ def try_user_scrape(username):
 
 
 if __name__ == '__main__':
-    for userName, userId in get_twitter_usernames():
-        try:
-            user_info = try_user_scrape(userName)
-            user_info['user_id'] = userId
-        except Exception as e:
-            print(e)
-            continue
-        update_user(user_info)
-        print(user_info)
-        time.sleep(5)
+    mode = 'recent'
+
+    if mode == 'recent':
+        while(True):
+            for userName, userId in get_recent_users():
+                try:
+                    user_info = try_user_scrape(userName)
+                    user_info['user_id'] = userId
+                except Exception as e:
+                    print(e)
+                    continue
+                update_user(user_info)
+                print(user_info)
+                time.sleep(3)
+    elif mode == 'forward':
+        for userName, userId in get_twitter_usernames():
+            try:
+                user_info = try_user_scrape(userName)
+                user_info['user_id'] = userId
+            except Exception as e:
+                print(e)
+                continue
+            update_user(user_info)
+            print(user_info)
+            time.sleep(3)
+    elif mode == 'backwards':
+        for userName, userId in reversed(get_twitter_usernames()):
+            try:
+                user_info = try_user_scrape(userName)
+                user_info['user_id'] = userId
+            except Exception as e:
+                print(e)
+                continue
+            update_user(user_info)
+            print(user_info)
+            time.sleep(3)
