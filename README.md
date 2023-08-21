@@ -9,16 +9,16 @@ This script uses the `stweet` library to scrape the unofficial Twitter API and u
 
 You can install these libraries using pip:
 
-<code>
+```
 pip install stweet psycopg2 python-dotenv
-</code>
+```
 
 ## Setup
 
 1. Create a `.env` file in the root directory of the project.
 2. Fill in the required environment variables:
 
-<code>
+```
 PROD_PASSWORD=your_prod_password
 PROD_HOST=your_prod_host
 DB_USER=your_db_user
@@ -26,7 +26,7 @@ DB_PORT=your_db_port
 DB_NAME=your_db_name
 LOCAL_PASSWORD=your_local_password
 LOCAL_HOST=your_local_host
-</code>
+```
 
 Replace the placeholders with your actual database credentials.
 
@@ -36,9 +36,9 @@ Replace the placeholders with your actual database credentials.
 
 1. Run the main script:
 
-<code>
+```
 python main.py
-</code>
+```
 
 The script will fetch Twitter usernames from the database, scrape the user details from Twitter, and then update the database with the fetched details.
 
