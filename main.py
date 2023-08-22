@@ -2,6 +2,25 @@ import stweet as st
 from db import get_twitter_usernames, update_user, get_recent_users
 import json
 import time
+import psycopg2
+from dotenv import load_dotenv
+import os
+
+production = True
+# load .env file
+load_dotenv()
+# set DB_USER to the value of the environment variable DB_USER
+DB_USER = os.getenv("DB_USER")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
+if production:
+    # production
+    DB_PASSWORD = os.getenv("PROD_PASSWORD")
+    DB_HOST = os.getenv("PROD_HOST")
+else:
+    # local
+    DB_PASSWORD = os.getenv("LOCAL_PASSWORD")
+    DB_HOST = os.getenv("LOCAL_HOST")
 
 
 def try_user_scrape(username):
@@ -25,11 +44,20 @@ def try_user_scrape(username):
 
 
 if __name__ == '__main__':
-    mode = 'recent'
+    mode = 'forward'
+    try:
+        connection = psycopg2.connect(user=DB_USER,
+                                      password=DB_PASSWORD,
+                                      host=DB_HOST,
+                                      port=DB_PORT,
+                                      database=DB_NAME)
+        cursor = connection.cursor()
+    except (Exception, psycopg2.Error) as error:
+        print("Error while fetching data from PostgresSQL", error)
 
     if mode == 'recent':
         while(True):
-            for userName, userId in get_recent_users():
+            for userName, userId in get_recent_users(cursor):
                 try:
                     user_info = try_user_scrape(userName)
                     user_info['user_id'] = userId
@@ -40,7 +68,7 @@ if __name__ == '__main__':
                 print(user_info)
                 time.sleep(3)
     elif mode == 'forward':
-        for userName, userId in get_twitter_usernames():
+        for userName, userId in get_twitter_usernames(cursor):
             try:
                 user_info = try_user_scrape(userName)
                 user_info['user_id'] = userId

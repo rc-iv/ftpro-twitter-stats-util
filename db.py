@@ -20,7 +20,7 @@ else:
     DB_HOST = os.getenv("LOCAL_HOST")
 
 
-def get_twitter_usernames():
+def get_twitter_usernames(cursor=None):
     twitter_usernames = []
     connection = None
     cursor = None
@@ -37,12 +37,15 @@ def get_twitter_usernames():
         metadata_records = cursor.fetchall()
 
         count = 0
+        count2 = 0
         for row in metadata_records:
             if row[12]:
                 count += 1
             else:
                 twitter_usernames.append((row[2], row[0]))
+                count2 += 1
         print(f"total users with data: {count}")
+        print(f"total users without data: {count2}")
     except (Exception, psycopg2.Error) as error:
         print("Error while fetching data from PostgresSQL", error)
 
@@ -54,17 +57,18 @@ def get_twitter_usernames():
         return twitter_usernames
 
 
-def get_recent_users():
+def get_recent_users(cursor=None):
     twitter_usernames = []
-    connection = None
-    cursor = None
+
+
     try:
-        connection = psycopg2.connect(user=DB_USER,
-                                      password=DB_PASSWORD,
-                                      host=DB_HOST,
-                                      port=DB_PORT,
-                                      database=DB_NAME)
-        cursor = connection.cursor()
+        if cursor is None:
+            connection = psycopg2.connect(user=DB_USER,
+                                          password=DB_PASSWORD,
+                                          host=DB_HOST,
+                                          port=DB_PORT,
+                                          database=DB_NAME)
+            cursor = connection.cursor()
         select_query = """
         select * from users 
         where "lastUpdated" > current_timestamp - interval '1 minute'
@@ -89,27 +93,27 @@ def get_recent_users():
         print("Error while fetching data from PostgresSQL", error)
 
     finally:
-        # closing database connection.
-        if connection:
-            cursor.close()
-            connection.close()
+        # # closing database connection.
+        # if connection:
+        #     cursor.close()
+        #     connection.close()
         return twitter_usernames
 
 
-def update_user(user_info):
-    connection = None
-    cursor = None
+def update_user(user_info, cursor=None):
+
     user_id = user_info['user_id']
     follower_count = user_info['follower_count']
     following_count = user_info['following_count']
     tweet_count = user_info['tweet_count']
     try:
-        connection = psycopg2.connect(user=DB_USER,
-                                      password=DB_PASSWORD,
-                                      host=DB_HOST,
-                                      port=DB_PORT,
-                                      database=DB_NAME)
-        cursor = connection.cursor()
+        if cursor is None:
+            connection = psycopg2.connect(user=DB_USER,
+                                          password=DB_PASSWORD,
+                                          host=DB_HOST,
+                                          port=DB_PORT,
+                                          database=DB_NAME)
+            cursor = connection.cursor()
         update_query = """
                 UPDATE users 
                 SET "followerCount" = %s, "followingCount" = %s, "tweetCount" = %s 
@@ -122,8 +126,8 @@ def update_user(user_info):
     except (Exception, psycopg2.Error) as error:
         print("Error while fetching data from PostgreSQL", error)
 
-    finally:
-        # closing database connection.
-        if connection:
-            cursor.close()
-            connection.close()
+    # finally:
+    #     # # closing database connection.
+    #     # if connection:
+    #     #     cursor.close()
+    #     #     connection.close()
