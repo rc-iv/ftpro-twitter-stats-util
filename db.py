@@ -2,6 +2,7 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+import csv
 
 production = True
 # load .env file
@@ -31,21 +32,12 @@ def get_twitter_usernames(cursor=None):
                                       port=DB_PORT,
                                       database=DB_NAME)
         cursor = connection.cursor()
-        select_query = "select * from users"
+        select_query = """select * from users where "twitterUsername" is null"""
 
         cursor.execute(select_query)
         metadata_records = cursor.fetchall()
 
-        count = 0
-        count2 = 0
-        for row in metadata_records:
-            if row[12]:
-                count += 1
-            else:
-                twitter_usernames.append((row[2], row[0]))
-                count2 += 1
-        print(f"total users with data: {count}")
-        print(f"total users without data: {count2}")
+        print(f"total users without data: {len(metadata_records)}")
     except (Exception, psycopg2.Error) as error:
         print("Error while fetching data from PostgresSQL", error)
 
@@ -72,6 +64,7 @@ def get_recent_users(cursor=None):
         select_query = """
         select * from users 
         where "lastUpdated" > current_timestamp - interval '1 minute'
+        and "twitterUsername" is null
         order by "lastUpdated" desc
         """
 
@@ -131,3 +124,39 @@ def update_user(user_info, cursor=None):
     #     # if connection:
     #     #     cursor.close()
     #     #     connection.close()
+
+
+def get_user_events(cursor, username):
+    print("getting user events")
+    try:
+        if cursor is None:
+            connection = psycopg2.connect(user=DB_USER,
+                                          password=DB_PASSWORD,
+                                          host=DB_HOST,
+                                          port=DB_PORT,
+                                          database=DB_NAME)
+            cursor = connection.cursor()
+        select_query = f"""
+        select * from events
+        where "trader" = '0x5ddfdb36ba0c4179f1fc42d4b796867bed02a15f'
+        """
+
+        print(f'select query: {select_query}')
+
+        cursor.execute(select_query)
+
+        user_records = cursor.fetchall()
+        # write user_records to a csv with columns: id, block number, trader, subject, isBuy, shareAmount, ethAmount, protocolEthAmount, subjectEthAmount, timestamp
+        with open('user_records.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['id', 'block_number', 'trader', 'subject', 'isBuy', 'shareAmount', 'ethAmount', 'protocolEthAmount', 'subjectEthAmount', 'timestamp'])
+            for row in user_records:
+                writer.writerow(row)
+
+
+
+        print(f'User records: {user_records}')
+        for row in user_records:
+            print(row)
+    except Exception as e:
+        print(e)

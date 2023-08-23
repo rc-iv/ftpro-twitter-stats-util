@@ -1,5 +1,5 @@
 import stweet as st
-from db import get_twitter_usernames, update_user, get_recent_users
+from db import get_twitter_usernames, update_user, get_recent_users, get_user_events
 import json
 import time
 import psycopg2
@@ -44,7 +44,7 @@ def try_user_scrape(username):
 
 
 if __name__ == '__main__':
-    mode = 'forward'
+    mode = 'recent'
     try:
         connection = psycopg2.connect(user=DB_USER,
                                       password=DB_PASSWORD,
@@ -67,6 +67,7 @@ if __name__ == '__main__':
                 update_user(user_info)
                 print(user_info)
                 time.sleep(3)
+            time.sleep(60)
     elif mode == 'forward':
         for userName, userId in get_twitter_usernames(cursor):
             try:
